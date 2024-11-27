@@ -20,7 +20,7 @@ const InvoiceManagement = () => {
   // Fetch Invoices
   const fetchInvoices = async () => {
     try {
-      const response = await axios.get('https://invoice-management-system-5kup.vercel.app/api/invoices/', {
+      const response = await axios.get('http://127.0.0.1:8000/api/invoices/', {
         params: { 
           page: currentPage,
           customer_name: customerFilter
@@ -40,10 +40,10 @@ const InvoiceManagement = () => {
     try {
       if (selectedInvoice) {
         // Update existing invoice
-        await axios.put(`https://invoice-management-system-5kup.vercel.app/api/invoices/${selectedInvoice.id}/`, invoiceForm);
+        await axios.put(`http://127.0.0.1:8000/api/invoices/${selectedInvoice.id}/`, invoiceForm);
       } else {
         // Create new invoice
-        await axios.post('https://invoice-management-system-5kup.vercel.app/api/invoices/', invoiceForm);
+        await axios.post('http://127.0.0.1:8000/api/invoices/', invoiceForm);
       }
       fetchInvoices();
       resetForm();
@@ -55,7 +55,7 @@ const InvoiceManagement = () => {
   // Delete Invoice
   const deleteInvoice = async (id) => {
     try {
-      await axios.delete(`https://invoice-management-system-5kup.vercel.app/api/invoices/${id}/`);
+      await axios.delete(` /${id}/`);
       fetchInvoices();
     } catch (error) {
       console.error('Error deleting invoice', error);
