@@ -1,15 +1,16 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2, Edit, PlusCircle } from 'lucide-react';
 
 const InvoiceManagement = () => {
+  // State Variables
   const [invoices, setInvoices] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [customerFilter, setCustomerFilter] = useState('');
 
-  // Invoice Form State
+  // Form State for Invoice Creation/Editing
   const [invoiceForm, setInvoiceForm] = useState({
     invoice_number: '',
     customer_name: '',
@@ -17,52 +18,55 @@ const InvoiceManagement = () => {
     details: [{ description: '', quantity: 1, unit_price: 0 }]
   });
 
-  // Fetch Invoices
+  // Fetch Invoices with Filters and Pagination
   const fetchInvoices = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/invoices/', {
-        params: { 
+      const response = await axios.get('https://invoice-mgmt-system-backend-tanjul.vercel.app/api/invoices/', {
+        params: {
           page: currentPage,
-          customer_name: customerFilter
+          customer_name: customerFilter.trim()
         }
       });
-      
+
       setInvoices(response.data.results);
-      setTotalPages(Math.ceil(response.data.count / 10));
+      setTotalPages(Math.ceil(response.data.count / 10) || 1); // Handle cases with no results
     } catch (error) {
-      console.error('Error fetching invoices', error);
+      console.error('Error fetching invoices:', error);
     }
   };
 
-  // Add/Edit Invoice
+  // Save Invoice (Add or Update)
   const saveInvoice = async (e) => {
     e.preventDefault();
     try {
       if (selectedInvoice) {
         // Update existing invoice
-        await axios.put(`http://127.0.0.1:8000/api/invoices/${selectedInvoice.id}/`, invoiceForm);
+        await axios.put(
+          `https://invoice-mgmt-system-backend-tanjul.vercel.app/api/invoices/${selectedInvoice.id}/`,
+          invoiceForm
+        );
       } else {
         // Create new invoice
-        await axios.post('http://127.0.0.1:8000/api/invoices/', invoiceForm);
+        await axios.post('https://invoice-mgmt-system-backend-tanjul.vercel.app/api/invoices/', invoiceForm);
       }
       fetchInvoices();
-      resetForm();
+      resetForm(); // Clear the form after save
     } catch (error) {
-      console.error('Error saving invoice', error);
+      console.error('Error saving invoice:', error);
     }
   };
 
   // Delete Invoice
   const deleteInvoice = async (id) => {
     try {
-      await axios.delete(` /${id}/`);
-      fetchInvoices();
+      await axios.delete(`https://invoice-mgmt-system-backend-tanjul.vercel.app/api/invoices/${id}/`);
+      fetchInvoices(); // Refresh the list after deletion
     } catch (error) {
-      console.error('Error deleting invoice', error);
+      console.error('Error deleting invoice:', error);
     }
   };
 
-  // Form Helpers
+  // Reset Form to Initial State
   const resetForm = () => {
     setSelectedInvoice(null);
     setInvoiceForm({
@@ -73,25 +77,31 @@ const InvoiceManagement = () => {
     });
   };
 
+  // Add a New Line Item
   const addLineItem = () => {
-    setInvoiceForm(prev => ({
+    setInvoiceForm((prev) => ({
       ...prev,
       details: [...prev.details, { description: '', quantity: 1, unit_price: 0 }]
     }));
   };
 
+  // Update Data on Dependencies Change
   useEffect(() => {
     fetchInvoices();
   }, [currentPage, customerFilter]);
 
   return (
     <div className="container mx-auto p-4">
+      <h1 className="text-center text-3xl font-extrabold text-green-500 hover:text-green-700 transition duration-300 ease-in-out shadow-lg hover:shadow-xl transform hover:scale-105">
+        Neura Dynamics - Assignment by Tanjul Sarathe
+      </h1>
+      <br />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Invoice List */}
         <div className="bg-white shadow-md rounded">
           <div className="p-4 border-b">
-            <input 
-              type="text" 
+            <input
+              type="text"
               placeholder="Filter by Customer Name"
               value={customerFilter}
               onChange={(e) => setCustomerFilter(e.target.value)}
@@ -108,19 +118,19 @@ const InvoiceManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {invoices.map(invoice => (
+              {invoices.map((invoice) => (
                 <tr key={invoice.id} className="border-b">
                   <td className="p-2">{invoice.invoice_number}</td>
                   <td className="p-2">{invoice.customer_name}</td>
                   <td className="p-2">${invoice.total_amount}</td>
                   <td className="p-2 flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => setSelectedInvoice(invoice)}
                       className="text-blue-500 hover:text-blue-700"
                     >
                       <Edit size={20} />
                     </button>
-                    <button 
+                    <button
                       onClick={() => deleteInvoice(invoice.id)}
                       className="text-red-500 hover:text-red-700"
                     >
@@ -133,17 +143,19 @@ const InvoiceManagement = () => {
           </table>
           {/* Pagination */}
           <div className="flex justify-between p-4">
-            <button 
+            <button
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
             >
               Previous
             </button>
-            <span>{currentPage} of {totalPages}</span>
-            <button 
+            <span>
+              {currentPage} of {totalPages}
+            </span>
+            <button
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
             >
               Next
@@ -155,37 +167,34 @@ const InvoiceManagement = () => {
         <div className="bg-white shadow-md rounded p-4">
           <form onSubmit={saveInvoice}>
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <input 
-                type="text" 
-                placeholder="Invoice Number" 
+              <input
+                type="text"
+                placeholder="Invoice Number"
                 value={invoiceForm.invoice_number}
-                onChange={(e) => setInvoiceForm(prev => ({
-                  ...prev, 
-                  invoice_number: e.target.value
-                }))}
+                onChange={(e) =>
+                  setInvoiceForm((prev) => ({ ...prev, invoice_number: e.target.value }))
+                }
                 className="p-2 border rounded"
-                required 
+                required
               />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 placeholder="Customer Name"
                 value={invoiceForm.customer_name}
-                onChange={(e) => setInvoiceForm(prev => ({
-                  ...prev, 
-                  customer_name: e.target.value
-                }))}
+                onChange={(e) =>
+                  setInvoiceForm((prev) => ({ ...prev, customer_name: e.target.value }))
+                }
                 className="p-2 border rounded"
-                required 
+                required
               />
-              <input 
-                type="date" 
+              <input
+                type="date"
                 value={invoiceForm.date}
-                onChange={(e) => setInvoiceForm(prev => ({
-                  ...prev, 
-                  date: e.target.value
-                }))}
+                onChange={(e) =>
+                  setInvoiceForm((prev) => ({ ...prev, date: e.target.value }))
+                }
                 className="p-2 border rounded"
-                required 
+                required
               />
             </div>
 
@@ -193,43 +202,43 @@ const InvoiceManagement = () => {
             <div className="space-y-2 mb-4">
               {invoiceForm.details.map((detail, index) => (
                 <div key={index} className="grid grid-cols-3 gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Description"
                     value={detail.description}
                     onChange={(e) => {
                       const newDetails = [...invoiceForm.details];
                       newDetails[index].description = e.target.value;
-                      setInvoiceForm(prev => ({ ...prev, details: newDetails }));
+                      setInvoiceForm((prev) => ({ ...prev, details: newDetails }));
                     }}
-                    className="p-2 border rounded" 
+                    className="p-2 border rounded"
                     required
                   />
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     placeholder="Quantity"
                     value={detail.quantity}
                     onChange={(e) => {
                       const newDetails = [...invoiceForm.details];
-                      newDetails[index].quantity = parseInt(e.target.value);
-                      setInvoiceForm(prev => ({ ...prev, details: newDetails }));
+                      newDetails[index].quantity = parseInt(e.target.value, 10);
+                      setInvoiceForm((prev) => ({ ...prev, details: newDetails }));
                     }}
                     min="1"
-                    className="p-2 border rounded" 
+                    className="p-2 border rounded"
                     required
                   />
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     placeholder="Unit Price"
                     value={detail.unit_price}
                     onChange={(e) => {
                       const newDetails = [...invoiceForm.details];
                       newDetails[index].unit_price = parseFloat(e.target.value);
-                      setInvoiceForm(prev => ({ ...prev, details: newDetails }));
+                      setInvoiceForm((prev) => ({ ...prev, details: newDetails }));
                     }}
                     step="0.01"
                     min="0"
-                    className="p-2 border rounded" 
+                    className="p-2 border rounded"
                     required
                   />
                 </div>
@@ -237,14 +246,15 @@ const InvoiceManagement = () => {
             </div>
 
             <div className="flex justify-between">
-              <button 
+              <button
                 type="button"
                 onClick={addLineItem}
                 className="flex items-center bg-green-500 text-white px-4 py-2 rounded"
               >
-                <PlusCircle className="mr-2" /> Add Line Item
+                <PlusCircle size={20} className="mr-2" />
+                Add Line Item
               </button>
-              <button 
+              <button
                 type="submit"
                 className="bg-blue-500 text-white px-4 py-2 rounded"
               >
